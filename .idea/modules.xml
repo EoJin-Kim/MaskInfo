@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MaskInfo.iml" filepath="$PROJECT_DIR$/.idea/modules/MaskInfo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/MaskInfo.app.unitTest.iml" />
+    </modules>
+  </component>
+</project>
