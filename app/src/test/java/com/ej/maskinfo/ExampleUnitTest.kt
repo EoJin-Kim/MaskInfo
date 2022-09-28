@@ -36,7 +36,5 @@ class ExampleUnitTest {
         val storeInfo = serverInfo.execute().body()
         assertEquals(222,storeInfo?.count)
         assertEquals(222,storeInfo?.stores?.size)
-
-
     }
 }

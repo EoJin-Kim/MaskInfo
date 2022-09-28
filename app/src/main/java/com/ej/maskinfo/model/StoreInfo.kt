@@ -12,7 +12,7 @@ public data class StoreInfo(
     @Json(name = "count")
     var count : Int,
     @Json(name = "stores")
-    var stores  : List<Store>
+    var stores  : MutableList<Store>
 
 
 )
