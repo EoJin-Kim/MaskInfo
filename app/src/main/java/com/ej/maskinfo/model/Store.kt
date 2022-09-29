@@ -1,24 +1,28 @@
 package com.ej.maskinfo.model
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
 
 data class Store (
     @Json(name = "addr")
     var addr : String,
     @Json(name = "code")
     var code : String,
-    @Json(name = "created_at")
-    val createdAt :String,
+    @field:Json(name = "created_at")
+    var createdAt :String,
     @Json(name = "lat")
-    val lat:Double,
+    var lat:Double,
     @Json(name = "lng")
-    val lng:Double,
+    var lng:Double,
     @Json(name = "name")
-    val name:String,
-    @Json(name = "remain_stat")
-    val remainStat : String,
-    @Json(name = "stock_at")
-    val stockAt : String,
+    var name:String,
+    @field:Json(name = "remain_stat")
+    var remainStat : String,
+    @field:Json(name = "stock_at")
+    var stockAt : String,
     @Json(name = "type")
     var type : String,
+
+    var distance : Double
 )

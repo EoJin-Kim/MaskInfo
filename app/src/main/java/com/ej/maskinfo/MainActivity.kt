@@ -1,62 +1,105 @@
 package com.ej.maskinfo
 
-import androidx.appcompat.app.AppCompatActivity
+import android.Manifest
+import android.annotation.SuppressLint
+import android.graphics.Color
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ej.maskinfo.databinding.ActivityMainBinding
 import com.ej.maskinfo.model.Store
-import com.ej.maskinfo.model.StoreInfo
-import com.ej.maskinfo.repository.MaskService
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
+import com.ej.maskinfo.viewmodel.MainViewModel
+import com.google.android.gms.location.*
+import com.gun0912.tedpermission.PermissionListener
+import com.gun0912.tedpermission.normal.TedPermission
+
 
 class MainActivity : AppCompatActivity() {
 
     private val TAG = MainActivity::class.simpleName
 
     lateinit var activityMainBinding: ActivityMainBinding
+
+    val viewModel : MainViewModel by lazy { ViewModelProvider(this).get(MainViewModel::class.java)}
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activityMainBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(activityMainBinding.root)
 
-        val recyclerView = activityMainBinding.recyclerView
-        recyclerView.layoutManager = LinearLayoutManager(this,RecyclerView.VERTICAL,false)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        val adapter = StoreAdapter()
-        recyclerView.adapter = adapter
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl(MaskService.BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create())
-            .build()
-
-        val service : MaskService = retrofit.create(MaskService::class.java)
-
-        val storeInfoCall : Call<StoreInfo> = service.fechStoreInfo()
-
-        storeInfoCall.enqueue(object : Callback<StoreInfo>{
-            override fun onResponse(call: Call<StoreInfo>, response: Response<StoreInfo>) {
-                val items = response.body()?.stores
-                adapter.updateItem(items)
-                supportActionBar?.title = "마스크 재고 있는 곳: ${items?.size}"
+        val permissionlistener: PermissionListener = object : PermissionListener {
+            override fun onPermissionGranted() {
+//                Toast.makeText(this@MainActivity, "Permission Granted", Toast.LENGTH_SHORT).show()
+                performAction()
             }
 
-            override fun onFailure(call: Call<StoreInfo>, t: Throwable) {
-                Log.e(TAG,"onFailure: ${t.message}")
+            override fun onPermissionDenied(deniedPermissions: List<String>) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Permission Denied\n$deniedPermissions",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-        })
+        }
+        TedPermission.create()
+            .setPermissionListener(permissionlistener)
+            .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
+            .setPermissions(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+            .check();
+
 
 
 
     }
+
+    @SuppressLint("MissingPermission")
+    private fun performAction() {
+
+        fusedLocationClient.lastLocation
+            .addOnFailureListener(this){ e ->
+                Log.e(TAG,"performaAction : ${e.cause}")
+
+            }
+            .addOnSuccessListener { location: Location? ->
+                Thread.sleep(1000)
+                // Got last known location. In some rare situations this can be null.
+                Log.d(TAG,"${location} aa")
+                if (location != null) {
+                    Log.d(TAG,"getLatitude: ${location.latitude}")
+                    Log.d(TAG,"getLatitude: ${location.latitude}")
+
+
+                    location.latitude = 37.188078
+                    location.longitude = 127.043002
+                    viewModel.location = location
+                    viewModel.fechStoreInfo()
+                }
+
+
+            }
+
+        val recyclerView = activityMainBinding.recyclerView
+        recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+
+        val adapter = StoreAdapter()
+        recyclerView.adapter = adapter
+
+        viewModel.itemLiveData.observe(this) { stores ->
+            adapter.updateItem(stores)
+            supportActionBar?.title = "마스크 재고 있는 곳: ${stores.size}"
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.main_menu, menu)
@@ -67,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         // Handle item selection
         return when (item.itemId) {
             R.id.action_refresh -> {
-
+                viewModel.fechStoreInfo()
                 true
             }
 
@@ -93,9 +136,50 @@ class StoreAdapter : RecyclerView.Adapter<StoreAdapter.StoreViewHolder>(){
 
         holder.nameTextView.text = store.name
         holder.addressTextView.text = store.addr
-        holder.distanceTextView.text = "1.0km"
-        holder.remainTextView.text = store.remainStat
-        holder.countTextView.text = "100ro 이상"
+        val dist = String.format("%.2fkm",store.distance)
+        holder.distanceTextView.text = "${dist}km"
+
+
+        var count = "100개 이상"
+        var remainState = "충분"
+        var color = Color.GREEN
+
+        when (store.remainStat) {
+            null->{
+                remainState = "재고 없음"
+                count = "재고 없음"
+                color = Color.GRAY
+            }
+            "plenty"->{
+                remainState = "충분"
+                count = "100개 이상"
+                color = Color.GREEN
+            }
+            "some" -> {
+                remainState = "여유"
+                count = "30개 이상"
+                color = Color.YELLOW
+            }
+            "few" -> {
+                remainState = "매진임박"
+                count = "2개 이상"
+                color = Color.RED
+            }
+            "empty" -> {
+                remainState = "재고 없음"
+                count = "재고 없음"
+                color = Color.GRAY
+            }
+
+        }
+
+
+        holder.remainTextView.text = remainState
+        holder.countTextView.text = count
+
+        holder.remainTextView.setTextColor(color)
+        holder.countTextView.setTextColor(color)
+
                
 
     }
