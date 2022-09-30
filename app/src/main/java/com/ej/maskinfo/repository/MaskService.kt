@@ -13,5 +13,5 @@ interface MaskService {
     }
 
     @GET("sample.json/?m=5000")
-    fun fechStoreInfo(@Query("lat") lat: Double,@Query("lng") lng : Double) : Call<StoreInfo>
+    suspend fun fechStoreInfo(@Query("lat") lat: Double,@Query("lng") lng : Double) : StoreInfo
 }
